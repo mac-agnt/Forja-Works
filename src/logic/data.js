@@ -1,4 +1,4 @@
-/* Demo data and pure helpers for the Pulse prototype (Kilbride Group). */
+/* Demo data and pure helpers for the Pulse prototype (Forja Works). */
 
 const INK="var(--ink)", BODY="var(--body)", DIM="var(--dim)", FAINT="var(--faint)";
 const LIME="var(--accent)", GREEN="var(--ok)", AMBER="var(--warn)", RED="var(--bad)", NEUTRAL="var(--neutral)";
@@ -39,81 +39,82 @@ const ICONS = {
 const REC_SECTIONS = [
   {id:"ontology", label:"Ontology", blurb:"How every record connects: entities, predicates and the paths between them."},
   {id:"files", label:"Files", blurb:"Documents, contracts and certificates — indexed where Helios can read them."},
-  {id:"contacts", label:"Contacts", blurb:"Every person the business deals with, staff and external."}
+  {id:"contacts", label:"Contacts", blurb:"Every person the business deals with, staff and external."},
+  {id:"jobs", label:"Jobs", blurb:"Every live job with its code, client, drawing revision and next action."},
+  {id:"clients", label:"Clients", blurb:"Commissioning clients and the jobs they own."},
+  {id:"people", label:"People", blurb:"Forja Works staff and workshop crew, as demo users."},
+  {id:"suppliers", label:"Suppliers", blurb:"Suppliers, what they supply and what is outstanding."}
 ];
 
 const CONTACTS = [
-  ["Aoife Nolan","Accounts manager","aoife@kilbridegroup.ie","Kilbride Group","staff","var(--accent)"],
-  ["Séamus Byrne","Senior installer","seamus@kilbridegroup.ie","Kilbride Group","staff","#9fd6f0"],
-  ["Tom Walsh","Operations lead","tom@kilbridegroup.ie","Kilbride Group","staff","#e6c78a"],
-  ["Niamh Cronin","Trade counter","niamh@kilbridegroup.ie","Kilbride Group","staff","#c8b4f0"],
-  ["Dermot Casey","Buyer","dermot@caseybuilders.ie","Casey Builders","customer","#9fd6f0"],
-  ["Liam Dunne","Owner","liam@dunneandsons.ie","Dunne & Sons Ltd","on stop","#e2a08c"],
-  ["Máire Fitzgerald","Director","maire@fitzheating.ie","Fitzgerald Heating","watch","#e6c78a"],
-  ["Paul Ó Riain","Site foreman","paul@oriain.ie","Ó Riain, Glanmire","customer","#a8e0c0"],
-  ["Cathal Moore","Account manager","cathal@munsterplumbing.ie","Munster Plumbing","supplier","#c8b4f0"]
+  ["Caio Pazini","Founder and owner","caio@forjaworks.com","Forja Works","staff","var(--accent)"],
+  ["Joyce","Operations","joyce@forjaworks.com","Forja Works","staff","#9fd6f0"],
+  ["Niamh","Production manager","niamh@forjaworks.com","Forja Works","staff","#e6c78a"],
+  ["Ana","Designer","ana@forjaworks.com","Forja Works","staff","#c8b4f0"],
+  ["Dara Whelan","Director","dara@smokehouse-social.example","Smokehouse Social Ltd","customer","#9fd6f0"],
+  ["Marco Lyons","Operations manager","marco@fornace-pizza.example","Fornace Pizza Group","customer","#a8e0c0"],
+  ["Victor Hennessy","Homeowner","victor@hennessy-home.example","FW-263 Victor house","customer","#e6c78a"],
+  ["Orla Brennan","Homeowner","orla@brennan-home.example","FW-267 Garden room","customer","#e2a08c"],
+  ["Quay Timber orders desk","Sheet goods and timber","orders@quaytimber.example","Quay Timber Supply","supplier","#c8b4f0"]
 ];
 
 const FILE_TREE = [
-  {type:"folder", id:"f-org", name:"Organisations", depth:0},
-  {type:"file", id:"fl-1", name:"Casey Builders — framework 2026.pdf", depth:1, parent:"f-org", indexed:true,
-   path:"Organisations / Casey Builders", title:"Casey Builders — framework 2026",
-   facts:[["TYPE","PDF · 6 pages"],["ADDED","12 Jan 2026"],["INDEXED","All 6 pages"],["OWNER","Aoife Nolan"]],
-   body:["The framework sets the discount tiers for 2026 and the payment terms Casey Builders trade on. Tier two applies from €40k of annual spend, which they passed in August.",
-     "Pricing is fixed to the June supplier agreement, so a change on the Munster side flows through here rather than being renegotiated separately.",
-     "Termination requires sixty days' notice on either side. Nothing in the document blocks putting the account on stop for non-payment."],
-   links:[["Casey Builders","org"],["Dermot Casey","person"],["PO-4471","order"]]},
-  {type:"file", id:"fl-2", name:"Dunne & Sons — credit application.pdf", depth:1, parent:"f-org", indexed:true,
-   path:"Organisations / Dunne & Sons Ltd", title:"Dunne & Sons — credit application",
-   facts:[["TYPE","PDF · 4 pages"],["ADDED","3 Mar 2011"],["INDEXED","All 4 pages"],["OWNER","Aoife Nolan"]],
-   body:["The original 2011 application, signed by Liam Dunne, setting a €20,000 limit against thirty-day terms.",
-     "Days-to-pay ran at twelve for most of that period and moved to seventy-four after May 2026, which is what put the account on stop.",
-     "The personal guarantee in section four is still in force and has never been called on."],
-   links:[["Dunne & Sons Ltd","org"],["Liam Dunne","person"],["INV-10428","invoice"]]},
-  {type:"folder", id:"f-cert", name:"Certificates", depth:0},
-  {type:"file", id:"fl-3", name:"Séamus Byrne — gas safe 2026.pdf", depth:1, parent:"f-cert", indexed:true,
-   path:"Certificates / Installers", title:"Séamus Byrne — gas safe 2026",
-   facts:[["TYPE","PDF · 2 pages"],["EXPIRES","14 Nov 2026"],["INDEXED","Both pages"],["OWNER","Operations"]],
-   body:["Registration covers domestic boilers and commercial water heaters, valid to 14 November 2026.",
-     "The renewal reminder fires sixty days before expiry. That routine failed twice this week because Mallow yard has no contact on file."],
-   links:[["Séamus Byrne","person"],["Certificate renewal reminder","workflow"]]},
-  {type:"file", id:"fl-4", name:"Public liability — 2026.pdf", depth:1, parent:"f-cert", indexed:false,
-   path:"Certificates / Insurance", title:"Public liability — 2026",
-   facts:[["TYPE","PDF · 12 pages"],["EXPIRES","1 Apr 2027"],["INDEXED","Not indexed"],["OWNER","Operations"]],
-   body:["Cover to €6.5m across all three locations. Not indexed, so Helios cannot answer questions from it yet.",
-     "Indexing it would let the site-visits module check cover before a job is booked at a new address."],
-   links:[["Head office","location"],["Ballincollig depot","location"]]},
-  {type:"folder", id:"f-fin", name:"Finance", depth:0},
-  {type:"file", id:"fl-5", name:"INV-10428.pdf", depth:1, parent:"f-fin", indexed:true,
-   path:"Finance / Invoices", title:"INV-10428",
-   facts:[["TYPE","PDF · 1 page"],["VALUE","€28,410"],["AGE","74 days"],["OWNER","Aoife Nolan"]],
-   body:["The oldest unpaid invoice on the ledger and the reason Dunne & Sons is on stop.",
-     "Two reminders have gone out. The third is drafted and waiting on the finance manager inside the chase workflow."],
-   links:[["Dunne & Sons Ltd","org"],["Chase unpaid invoices","workflow"]]},
-  {type:"file", id:"fl-6", name:"Month-end close — August.xlsx", depth:1, parent:"f-fin", indexed:false,
-   path:"Finance / Close", title:"Month-end close — August",
-   facts:[["TYPE","XLSX · 9 sheets"],["ADDED","1 Sep 2026"],["INDEXED","Not indexed"],["OWNER","Aoife Nolan"]],
-   body:["The working file behind the August close. Cash collected came in at €368k against €358k in July.",
-     "Spreadsheets are stored but not indexed by default — the numbers Helios quotes come from the ledger, not from here."],
-   links:[["Finance","area"],["Month-end close","workflow"]]}
+  {type:"folder", id:"f-draw", name:"Drawings", depth:0},
+  {type:"file", id:"fl-1", name:"FW-261 Burger counter R03.pdf", depth:1, parent:"f-draw", indexed:true,
+   path:"Drawings / FW-261", title:"FW-261 Burger counter, revision R03",
+   facts:[["TYPE","PDF · 3 pages"],["STATUS","Awaiting client sign-off"],["SERVICE OPENING","940 mm"],["OWNER","Ana"]],
+   body:["Revision R03 widens the service opening from 900 mm to 940 mm to clear the POS terminal and tray run.",
+     "R02 is superseded. Any printed R02 pack is withdrawn. The workshop pack stays held until the client approves R03 and the deposit is recorded.",
+     "Sample import from the shared Drive. The live source of truth in this demo is the job record."],
+   links:[["FW-261 Burger fit-out","org"],["Ana","person"]]},
+  {type:"file", id:"fl-2", name:"FW-261 Burger counter R02.pdf", depth:1, parent:"f-draw", indexed:true,
+   path:"Drawings / FW-261", title:"FW-261 Burger counter, revision R02 (superseded)",
+   facts:[["TYPE","PDF · 3 pages"],["STATUS","Superseded"],["SERVICE OPENING","900 mm"],["OWNER","Ana"]],
+   body:["The previous issue, approved by the client on R02 and then replaced by R03.",
+     "Kept in history so the approval trail is intact. It must not reach the bench."],
+   links:[["FW-261 Burger fit-out","org"]]},
+  {type:"folder", id:"f-quote", name:"Quotes and contracts", depth:0},
+  {type:"file", id:"fl-3", name:"Q-261 Burger fit-out v1.pdf", depth:1, parent:"f-quote", indexed:true,
+   path:"Quotes and contracts / FW-261", title:"Q-261 Burger fit-out, v1 accepted quote",
+   facts:[["TYPE","PDF · 4 pages"],["VALUE","€48,000"],["MILESTONES","24,000 / 19,200 / 4,800"],["OWNER","Caio Pazini"]],
+   body:["Accepted base build at 30.0 percent expected profit after allocated overhead.",
+     "Milestones: deposit €24,000, during installation €19,200, after snag sign-off €4,800. The design fee was settled separately."],
+   links:[["Smokehouse Social Ltd","org"],["Dara Whelan","person"]]},
+  {type:"file", id:"fl-4", name:"Docklands pop-up quote history.pdf", depth:1, parent:"f-quote", indexed:true,
+   path:"Quotes and contracts / FW-264", title:"Docklands pop-up bar, quote history",
+   facts:[["TYPE","PDF · 2 pages"],["VALUE","€28,500"],["INSTALL","Fri 27 Nov"],["OWNER","Niamh"]],
+   body:["The premium activation example used in estimate history. Install slot is fixed and the pack is approved."],
+   links:[["Tidewater Beverages","org"]]},
+  {type:"folder", id:"f-sup", name:"Supplier paperwork", depth:0},
+  {type:"file", id:"fl-5", name:"PO-262-01 Quay Timber.pdf", depth:1, parent:"f-sup", indexed:true,
+   path:"Supplier paperwork / FW-262", title:"PO-262-01, Quay Timber Supply",
+   facts:[["TYPE","PDF · 1 page"],["QUANTITY","18 sheets birch ply 18 mm"],["RECEIVED","12 of 18"],["BUYER","Joyce"]],
+   body:["Delivery one supplied 12 sheets. Six remain outstanding and hold the banquette cutting task.",
+     "A sample supplier invoice for the first 12 sheets (€540) can be photographed in Job Costing. The receipt sets quantity, the invoice sets cost."],
+   links:[["Quay Timber Supply","org"],["FW-262 Pizza fit-out","org"]]},
+  {type:"file", id:"fl-6", name:"Kiln Finish Supplies price list.xlsx", depth:1, parent:"f-sup", indexed:false,
+   path:"Supplier paperwork / Price lists", title:"Kiln Finish Supplies price list",
+   facts:[["TYPE","XLSX · 2 sheets"],["ADDED","1 Nov 2026"],["INDEXED","Not indexed"],["OWNER","Joyce"]],
+   body:["Coatings and lacquers price list. Stored but not indexed."],
+   links:[["Kiln Finish Supplies","org"]]}
 ];
 
 const ONTO_NODES = [
-  ["Organisation","entity",500,300,1,"Customers and suppliers. Balances arrive from the ledger through the record spine."],
-  ["Person","entity",300,190,1,"One entity for staff and external contacts, scoped by role rather than split in two."],
-  ["Location","entity",700,190,1,"Multi-branch as a business concept: locations plus the location permission scope."],
-  ["Team","entity",250,430,1,"Teams are records, so the team scope on a grant resolves against them."],
-  ["Task","entity",690,430,1,"Work, whatever it is attached to. Queues are one permission-filtered query."],
-  ["Approval","entity",850,320,0,"A request and its steps. Each decision is written as the person who made it."],
-  ["Invoice","ledger",390,95,0,"Read through the spine — the wholesale ledger stays the source of truth."],
-  ["Order","ledger",620,95,0,"Purchase and sales orders, linked to the organisation that raised them."],
-  ["Visit","module",860,470,0,"Contributed by site-visits, with its own table, predicate and tools."],
-  ["File","entity",140,300,0,"Documents against any record. Indexed pages are what Helios can read."],
-  ["works at","predicate",395,240,0,"Person → Organisation."],
-  ["located at","predicate",605,240,0,"Organisation → Location."],
-  ["member of","predicate",360,370,0,"Person → Team."],
-  ["relates to","predicate",600,370,0,"Task → anything."],
-  ["attached to","predicate",140,372,0,"File → anything."]
+  ["Job","entity",500,300,1,"The hub. Every job has a code, a client, an owner, a stage and a next action."],
+  ["Receipt","entity",300,190,1,"A delivery receipt. It sets quantity received and clears or keeps a materials hold."],
+  ["Drawing revision","entity",700,190,1,"R01, R02, R03. Only the current approved revision can reach the bench."],
+  ["Material requirement","entity",250,430,1,"What a work pack needs, from which supplier, by when, and how much has arrived."],
+  ["Task","entity",690,430,1,"Work with an owner, due time and job link. Closes itself when its condition is met."],
+  ["Approval","entity",850,320,0,"Client sign-off. Records the actor, revision and local timestamp."],
+  ["Invoice","ledger",390,95,0,"Supplier invoice. Establishes cost; the receipt establishes quantity."],
+  ["Purchase order","ledger",620,95,0,"PO-262-01 and friends, linked to a supplier and a job."],
+  ["Work pack","module",860,470,0,"Released only when quote, approval, deposit and materials gates are clear."],
+  ["Supplier","entity",140,300,0,"Quay Timber Supply, Kiln Finish Supplies. Linked to receipts and purchase orders."],
+  ["delivered by","predicate",395,240,0,"Receipt → Job."],
+  ["clears hold on","predicate",605,240,0,"Drawing revision → Job."],
+  ["fulfils","predicate",360,370,0,"Receipt → Material requirement."],
+  ["releases","predicate",600,370,0,"Approval → Work pack → Task."],
+  ["supplies","predicate",140,372,0,"Supplier → Receipt."]
 ];
 
 const ONTO_EDGES = [
@@ -154,10 +155,10 @@ const REC_TEMPLATE_CATS = ["All","Records","Case work","Finance","Notes","Ops"];
 /* ---- admin hub ---- */
 /* ---- admin hub: 13 settings areas in five groups ---- */
 const PEOPLE = [
-  ["Aoife Nolan","Accounts manager","aoife@kilbridegroup.ie","Head office","active","Admin","2 min ago"],
-  ["Séamus Byrne","Senior installer","seamus@kilbridegroup.ie","Ballincollig","active","Standard","1 h ago"],
-  ["Tom Walsh","Operations lead","tom@kilbridegroup.ie","Head office","active","Manager","34 min ago"],
-  ["Niamh Cronin","Trade counter","niamh@kilbridegroup.ie","Ballincollig","active","Standard","3 h ago"],
+  ["Aoife Nolan","Accounts manager","aoife@forjaworks.com","Head office","active","Admin","2 min ago"],
+  ["Séamus Byrne","Senior installer","seamus@forjaworks.com","Ballincollig","active","Standard","1 h ago"],
+  ["Tom Walsh","Operations lead","tom@forjaworks.com","Head office","active","Manager","34 min ago"],
+  ["Niamh Cronin","Trade counter","niamh@forjaworks.com","Ballincollig","active","Standard","3 h ago"],
   ["Dermot Casey","Buyer · Casey Builders","dermot@caseybuilders.ie","—","external","External","2 days ago"],
   ["Liam Dunne","Owner · Dunne & Sons","liam@dunneandsons.ie","—","inactive","External","19 days ago"]
 ];
@@ -253,6 +254,7 @@ const THEMES = [
   {id:"slate", label:"Slate", group:"Dark", bg:"#100e0c", surface:"#211c17", ink:"#f4f0ea", accent:"#e8a14a"},
   {id:"plum", label:"Plum", group:"Dark", bg:"#100a10", surface:"#20151f", ink:"#f6eef4", accent:"#f077b0"},
   {id:"ember", label:"Ember", group:"Dark", bg:"#0b0b0b", surface:"#1c1714", ink:"#f7f3ef", accent:"#f4561a"},
+  {id:"forja", label:"Forja", group:"Dark", bg:"#17191b", surface:"#202326", ink:"#f7f6f2", accent:"#176d67"},
   {id:"harbour", label:"Harbour", group:"Dark", bg:"#0b0e10", surface:"#13171a", ink:"#f3f5f4", accent:"#5ee79a"},
   {id:"cargo", label:"Cargo", group:"Dark", bg:"#0a0a0a", surface:"#1a1c1a", ink:"#f2f5f2", accent:"#4ade80"},
   {id:"ocean", label:"Ocean", group:"Dark", bg:"#080e12", surface:"#141f25", ink:"#eaf4f8", accent:"#4fd4d0"},
@@ -301,7 +303,7 @@ const ADMIN_CARDS = [
    blurb:"Who reports to whom, where they work and when.",
    tags:["3 locations","Europe/Dublin","EUR"],
    listLabel:"WHAT YOU CONTROL HERE",
-   rows:[["Company details","Kilbride Group"],["Departments","5"],["Teams","6"],["Locations","3"],
+   rows:[["Company details","Forja Works"],["Departments","5"],["Teams","6"],["Locations","3"],
      ["Reporting lines","4"],["Working hours","08:00–17:30, Mon–Fri"],["Holidays","Irish public holidays"],
      ["Default currency and timezone","EUR · Europe/Dublin"]]},
 
@@ -392,7 +394,7 @@ const ADMIN_CARDS = [
    blurb:"Logo, accent colour, templates and how agents appear.",
    tags:["Lime accent","2 templates"],
    listLabel:"WHAT YOU CONTROL HERE",
-   rows:[["Company logo","kilbride-mark.svg"],["Pulse accent colour","oklch(0.86 0.19 118)"],
+   rows:[["Company logo","forja-works-white.svg"],["Pulse accent colour","oklch(0.86 0.19 118)"],
      ["Email templates","3"],["Document templates","2"],["Agent appearance","12 faces · 6 shells"],
      ["Customer-facing portal branding","on", true]]},
   {id:"appearance", group:"EXPERIENCE", title:"Appearance & themes", icon:"brand", tint:"#6ad0f0",
@@ -429,7 +431,7 @@ const DATA_EVENTS = [
 const PEOPLE_EVENTS = [
   ["Aoife approved a refund","€412 written off on INV-10233 after the parts dispute closed.","Aoife Nolan","Glanmire Mechanical","Pulse","completed"],
   ["Tom changed a booking","Thursday's depot visit moved to 11:00 to fit the delivery window.","Tom Walsh","Ballincollig depot","Pulse","completed"],
-  ["Mac assigned a task","Lease decision handed to himself, due Thursday.","Martin Kilbride","Ballincollig depot","Pulse","completed"],
+  ["Mac assigned a task","Lease decision handed to himself, due Thursday.","Caio Pazini","Ballincollig depot","Pulse","completed"],
   ["Finance uploaded a report","August month-end close workbook, nine sheets.","Aoife Nolan","Head office","Pulse","completed"],
   ["Niamh edited customer details","Billing email corrected so reminders stop bouncing.","Niamh Cronin","Dunne & Sons Ltd","Pulse","completed"],
   ["Séamus completed a visit","Warranty callback closed — parts ordered on the spot.","Séamus Byrne","Fitzgerald Heating","Pulse","completed"],
@@ -445,7 +447,7 @@ const AI_EVENTS = [
   ["Agent paused for approval","Chase email to Dunne & Sons drafted — needs your yes before it sends.","Finance Agent","Dunne & Sons Ltd","Agent","awaiting"],
   ["Workflow failed","Certificate renewal reminder could not find a contact for Mallow yard.","Operations","Mallow yard","Agent","failed"],
   ["Stock Watch raised order lines","Two lines below reorder point before Thursday's jobs.","Stock Watch","Munster Plumbing","Agent","working"],
-  ["Briefing Agent posted the morning brief","Two items needed you; the rest was noise.","Briefing Agent","Martin Kilbride","WhatsApp","completed"]
+  ["Briefing Agent posted the morning brief","Two items needed you; the rest was noise.","Briefing Agent","Caio Pazini","WhatsApp","completed"]
 ];
 
 const STREAM_DEFS = [
@@ -460,10 +462,15 @@ const STREAM_DEFS = [
 const NAV = [
   {label:"Home", icon:"helios", page:"Home"},
   {label:"Agents", icon:"navAgents", page:"Agents"},
+  {label:"Estimates", icon:"records", page:"Estimates"},
+  {label:"Jobs", icon:"orgs", page:"Jobs"},
+  {label:"Workshop", icon:"modules", page:"Workshop", dot:true},
+  {label:"Purchasing", icon:"inbox", page:"Purchasing"},
+  {label:"Job Costing", icon:"insights", page:"Job Costing"},
   {label:"Dashboard", icon:"navDash", page:"Dashboard", dot:true},
   {label:"Work", icon:"navWork", page:"Work"},
   {label:"Records", icon:"navRecords", page:"Records"},
-  {label:"Activity", icon:"pulseLine", page:"Activity", dot:true}
+  {label:"Activity", icon:"pulseLine", page:"Activity"}
 ];
 
 /* Inbox items follow the real InboxItem shape: what happened, why it matters, what I can do. */
@@ -474,7 +481,7 @@ const ITEMS = {
     detail:"Both lines are below reorder point and committed to Thursday's jobs. Pricing matches the June supplier agreement. Approving writes the decision as you and fires core.approval.updated.",
     actionLabel:"Approve", secondaryLabel:"Request changes", group:"Approvals",
     fields:[{k:"Provider",v:"core.approvals"},{k:"Requested by",v:"Aoife Nolan"},{k:"Value",v:"€14,280"},{k:"Record",v:"PO-4471"}],
-    history:[{when:"Today 08:54",text:"Aoife Nolan raised the request"},{when:"Today 08:54",text:"Routed to Martin Kilbride — over threshold"}]},
+    history:[{when:"Today 08:54",text:"Aoife Nolan raised the request"},{when:"Today 08:54",text:"Routed to Caio Pazini — over threshold"}]},
   sync:{kind:"Alert", importance:"critical", icon:ICONS.health, age:"6h",
     title:"Xero sync failed — expired token",
     why:"148 invoices have been queued since 02:14. Reconnecting posts them automatically.",
@@ -501,7 +508,7 @@ const ITEMS = {
     why:"No decision recorded against the contract and the notice period is 30 days.",
     detail:"The lease runs to 31 October. Ballincollig carried 38% of counter revenue this year; rent is 4.1% of that.",
     actionLabel:"Open record", secondaryLabel:"Assign", group:"Work",
-    fields:[{k:"Provider",v:"core.tasks"},{k:"Due",v:"Thu 27 Aug"},{k:"Assignee",v:"Martin Kilbride"},{k:"Priority",v:"high"}],
+    fields:[{k:"Provider",v:"core.tasks"},{k:"Due",v:"Thu 27 Aug"},{k:"Assignee",v:"Caio Pazini"},{k:"Priority",v:"high"}],
     history:[{when:"18 Aug",text:"Task materialised from a recurring rule"},{when:"2 Feb",text:"Contract uploaded by Aoife Nolan"}]}
 };
 const ORDER = ["sync","po","visit","auto","task"];
@@ -622,7 +629,7 @@ const TEAMS = [
   ["Accounts","3 members","Aoife Nolan","core:approval:decide"],
   ["Installers","9 members","Séamus Byrne","core:task:update"],
   ["Trade counter","6 members","Niamh Cronin","core:person:view"],
-  ["Management","2 members","Martin Kilbride","all core permissions"]
+  ["Management","2 members","Caio Pazini","all core permissions"]
 ];
 const LOCATIONS = [
   ["Head office","Little Island, Cork","14 staff","active"],

@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { arr, css, cx, txt } from "../../runtime/template";
 import HomeThread from "./HomeThread";
-import HomeWidgetRail from "./HomeWidgetRail";
+import HomeRail from "../../forja/views/HomeRail";
 
 type Props = { v: any };
 
@@ -94,7 +94,7 @@ export default function Home({ v }: Props) {
             </>
           )}
         </div>
-        {v.showRail && <HomeWidgetRail v={v} />}
+        {v.showRail && <HomeRail />}
       </div>
     </>
   );

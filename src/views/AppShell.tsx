@@ -12,6 +12,9 @@ import Activity from "./pages/Activity";
 import Settings from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
+import ForjaPage from "../forja/ForjaPage";
+import Wordmark from "../forja/Wordmark";
+import { Toaster } from "../forja/ui";
 import HeliosMini from "./overlays/HeliosMini";
 import WorkViewer from "./overlays/WorkViewer";
 import AgentStudio from "./overlays/AgentStudio";
@@ -32,14 +35,14 @@ export default function AppShell({ v }: Props) {
         <span style={css(v.railThumbStyle)} />
         <div style={css(cat(v.railRowStyle, "margin-bottom:22px"))}>
           <button className={cx("ix0", "ix1")} onClick={v.toggleRail} title={v.railLabel} style={{"width":"36px","height":"36px","flex":"none","border":"0","borderRadius":"var(--cta-r,11px)","background":"var(--accent-fill,var(--accent))","color":"var(--on-accent)","boxShadow":"var(--accent-glow,none)","cursor":"pointer","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"13px","fontWeight":"600","padding":"0","transition":"transform .2s var(--ease)"}}>
-            {"K"}
+            {"F"}
           </button>
           <span style={css(v.brandStyle)}>
-            <span style={{"display":"block","fontSize":"15px","fontWeight":"600","letterSpacing":"-.3px","color":"var(--ink)"}}>
-              {"Kilbride Group"}
+            <span style={{"display":"block"}}>
+              <Wordmark height={34} fallbackSize={15} />
             </span>
             <span style={{"display":"block","marginTop":"2px","fontSize":"9px","fontWeight":"500","letterSpacing":".16em","color":"var(--accent)"}}>
-              {"PULSE · OPERATIONS"}
+              {"PULSE · DEMO DATA"}
             </span>
           </span>
           {v.railOpen && (
@@ -96,14 +99,14 @@ export default function AppShell({ v }: Props) {
               </div>
               <div style={{"display":"flex","alignItems":"center","gap":"11px","marginTop":"12px"}}>
                 <div style={{"width":"40px","height":"40px","flex":"none","borderRadius":"999px","background":"var(--accent-soft)","color":"var(--accent)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"13px","fontWeight":"600"}}>
-                  {"MK"}
+                  {"CP"}
                 </div>
                 <div style={{"minWidth":"0"}}>
                   <div style={{"fontSize":"17px","fontWeight":"600","letterSpacing":"-.3px","color":"var(--ink)","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-                    {"Martin Kilbride"}
+                    {"Caio Pazini"}
                   </div>
                   <div style={{"fontSize":"12.5px","color":"var(--faint)","marginTop":"2px","whiteSpace":"nowrap","overflow":"hidden","textOverflow":"ellipsis"}}>
-                    {"Kilbride Group · Owner"}
+                    {"Forja Works · Owner"}
                   </div>
                 </div>
               </div>
@@ -143,14 +146,14 @@ export default function AppShell({ v }: Props) {
             </button>
             <div style={css(cat(v.railRowStyle, "margin-top:10px;padding:12px 10px;border-top:1px solid var(--border)"))}>
               <div style={{"width":"40px","height":"40px","flex":"none","borderRadius":"12px","background":"var(--surface-2)","border":"1px solid var(--border)","color":"var(--body)","display":"flex","alignItems":"center","justifyContent":"center","fontSize":"12px","fontWeight":"600","cursor":"pointer"}}>
-                {"MK"}
+                {"CP"}
               </div>
               <span style={css(v.brandStyle)}>
                 <span style={{"display":"block","fontSize":"14px","fontWeight":"500","color":"var(--ink)"}}>
-                  {"Martin Kilbride"}
+                  {"Caio Pazini"}
                 </span>
                 <span style={{"display":"block","marginTop":"2px","fontSize":"12px","color":"var(--faint)"}}>
-                  {"Kilbride Group · Owner"}
+                  {"Forja Works · Owner"}
                 </span>
               </span>
             </div>
@@ -311,7 +314,7 @@ export default function AppShell({ v }: Props) {
                         <>
                           <div style={{"minWidth":"0"}}>
                             <div style={{"fontSize":"12px","fontWeight":"500","lineHeight":"1.2","whiteSpace":"nowrap"}}>
-                              {"Martin Kilbride"}
+                              {"Caio Pazini"}
                             </div>
                             <div style={{"fontSize":"10.5px","color":"var(--faint)","lineHeight":"1.2"}}>
                               {"Owner"}
@@ -389,6 +392,7 @@ export default function AppShell({ v }: Props) {
         {v.isDashboard && <DashboardKpiBand v={v} />}
         <div data-scroll-main="1" style={{"flex":"1","minHeight":"0","overflowY":"auto","overflowX":"hidden","scrollbarWidth":"none"}}>
           {v.isChat && <Home v={v} />}
+          {v.isForja && <ForjaPage page={v.forjaPage} tab={v.forjaTab ?? undefined} job={v.forjaJob ?? undefined} />}
           {v.isWork && <Work v={v} />}
           {v.isRecords && <Records v={v} />}
           {v.rec?.isContacts && (

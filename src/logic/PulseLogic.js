@@ -65,6 +65,10 @@ import {
   hexRGB,
   buildGraph
 } from "./data";
+import { answer as forjaAnswer, jobSummary, exceptions as forjaExceptions, dayPlanned, dayAvail, TODAY as F_TODAY } from "../forja/derive";
+import { dublinHour } from "../forja/dates";
+import { getState as forjaState } from "../forja/store";
+import { TABS as F_TABS, RECORD_TABS, FORJA_PAGES, FORJA_RECORD_TABS, navigate as fNavigate, parseHash, hashFor } from "../forja/nav";
 
 /* ── Locked layout ──────────────────────────────────────────────────────────
    These two rules hold for every client build, whatever data.js says:
@@ -84,9 +88,12 @@ const NAV = (() => {
   return [home, agents].concat(items);
 })();
 
+const forjaExc = () => forjaExceptions(forjaState());
+const forjaTue = () => { const s = forjaState(); return dayPlanned(s, F_TODAY) + "/" + dayAvail(s, F_TODAY) + "H"; };
+
 /* All state and behaviour for Pulse. renderVals() returns the flat object the views render from. */
 export default class PulseLogic extends DCLogic {
-  state = { w: typeof window === "undefined" ? 1440 : window.innerWidth, theme:"harbour", page:"Home", draft:"", query:"", thread:[], typed:0, paletteOpen:false, showNotifs:false, palScope:"All", palSel:0, palRecent:["Dunne & Sons Ltd","Credit Control"],
+  state = { w: typeof window === "undefined" ? 1440 : window.innerWidth, theme:"forja", page:"Home", ftab:null, fjob:null, draft:"", query:"", thread:[], typed:0, paletteOpen:false, showNotifs:false, palScope:"All", palSel:0, palRecent:["Dunne & Sons Ltd","Credit Control"],
             done:{}, resolved:{}, approved:{}, inboxFilter:"All", approvalFilter:"Awaiting you", open:null, range:"30d",
             workDoc:null, workDocTab:"work",
             queue:"mine", recordTab:"Overview", record:"person", hovered:null, hoverLabel:"", hoverHint:"", hoverTop:0,
@@ -97,7 +104,7 @@ export default class PulseLogic extends DCLogic {
             adminOpen:null, adminFlags:{}, adminGroup:null,
             actPaused:false, actHover:null, actKpi:"all", actQuery:"", actOpen:null, actTick:0,
             recSection:"ontology", recAsk:"", treeOpen:true, treeExpanded:{}, treeFile:"fl-1", treeQuery:"",
-            ontoNode:"Organisation", ontoHover:null, ontoLayout:"Force",
+            ontoNode:"Job", ontoHover:null, ontoLayout:"Force",
             newRecOpen:false, newRecName:"", newRecTemplate:"Field sheet", newRecCat:"All",
             opsFilter:"all", opsOff:{}, opsOpen:null, opsScope:"week", opsDay:26, opsOrder:null, opsDrag:null,
             opsBuilderOpen:false, opsBuilderMode:"workflow", builderText:"", builderGenerated:false,
@@ -1159,6 +1166,9 @@ export default class PulseLogic extends DCLogic {
   }
 
   componentDidMount(){
+    this._hash = () => this.applyHash();
+    window.addEventListener("hashchange", this._hash);
+    if (window.location.hash) this.applyHash();
     requestAnimationFrame(() => this.syncRailThumb());
     setTimeout(() => this.syncRailThumb(), 700);
     setTimeout(() => { const nav = document.querySelector('nav[data-rail-nav]');
@@ -1216,10 +1226,14 @@ export default class PulseLogic extends DCLogic {
     };
     window.addEventListener("paste", this._paste);
   }
-  componentWillUnmount(){ window.removeEventListener("paste", this._paste); window.removeEventListener("resize", this._resize); window.removeEventListener("keydown", this._key); clearInterval(this._t); clearInterval(this._clockTimer); clearInterval(this._flapBoot); cancelAnimationFrame(this._raf); clearInterval(this._fallback); clearInterval(this._actTimer); clearInterval(this._kpiTimer); }
+  componentWillUnmount(){ window.removeEventListener("hashchange", this._hash); window.removeEventListener("paste", this._paste); window.removeEventListener("resize", this._resize); window.removeEventListener("keydown", this._key); clearInterval(this._t); clearInterval(this._clockTimer); clearInterval(this._flapBoot); cancelAnimationFrame(this._raf); clearInterval(this._fallback); clearInterval(this._actTimer); clearInterval(this._kpiTimer); }
 
+  forjaAsk(q){
+    const f = forjaAnswer(forjaState(), q);
+    return {text:f.text, tool:f.tool, effect:"read", cols:f.cols, rows:f.rows, actions:f.actions.map((x, i) => [x.label, i === 0 ? 1 : 0, x.link])};
+  }
   ask(q){
-    const a = pickAnswer(q);
+    const a = this.forjaAsk(q);
     const words = a.text.split(" ").length;
     const thread = this.state.thread.concat([
       {role:"user", text:q},
@@ -1253,8 +1267,24 @@ export default class PulseLogic extends DCLogic {
     const order = NAV.filter(n => !n.divider).map(n => n.page).concat(["Settings"]);
     const from = order.indexOf(this.state.page), to = order.indexOf(page);
     if (from > -1 && to > -1 && from !== to) this.setState(p => ({navDir: to > from ? 1 : -1, navSeq:(p.navSeq || 0) + 1}));
-    this.setState({page, open:null, showNotifs:false, filterMenuOpen:false});
+    this.setState({page, open:null, showNotifs:false, filterMenuOpen:false, ftab:null, fjob:null});
     if (page === "Dashboard") this.startKpiCount();
+    if (typeof window !== "undefined") { const h = hashFor(page === "Records" ? {page, tab:this.state.recSection} : {page}); if (window.location.hash !== h) window.history.pushState(null, "", h); }
+  }
+  /* The URL hash is the source of truth for deep links and back navigation. */
+  applyHash(){
+    const p = parseHash(window.location.hash);
+    if (p.kind !== "app") return;
+    const r = p.route;
+    if (r.page === "Home" && !window.location.hash) return;
+    const cur = this.state;
+    if (r.page === "Records"){
+      const known = RECORD_TABS.some(t => t.id === r.tab);
+      this.setState({page:"Records", recSection: known ? r.tab : cur.recSection, ftab:null, fjob:r.job || null, open:null});
+    } else {
+      this.setState({page:r.page, ftab:r.tab || null, fjob:r.job || null, open:null, showNotifs:false});
+    }
+    if (r.page === "Dashboard") this.startKpiCount();
   }
   toggleIn(key, value){
     this.setState(prev => {
@@ -1272,7 +1302,7 @@ export default class PulseLogic extends DCLogic {
     });
   }
   askMini(q){
-    const a = pickAnswer(q);
+    const a = this.forjaAsk(q);
     this.setState(prev => ({
       miniThread: prev.miniThread.concat([{role:"user", text:q}, {role:"helios", text:a.text}]),
       miniDraft: ""
@@ -1749,14 +1779,19 @@ export default class PulseLogic extends DCLogic {
         placeholder:"Search inside every document…", kind:"FULL TEXT", scroll:"SCROLL FOR THE VIEWER",
         suggestions:["credit","expiry","framework","invoice"]},
       ontology:{eyebrow:"ONTOLOGY", title:"Ontology", blurb:recSec.blurb,
-        placeholder:"", kind:"", scroll:"", suggestions:[]}
+        placeholder:"", kind:"", scroll:"", suggestions:[]},
+      jobs:{eyebrow:"", title:"Jobs", blurb:recSec.blurb, placeholder:"", kind:"", scroll:"", suggestions:[]},
+      clients:{eyebrow:"", title:"Clients", blurb:recSec.blurb, placeholder:"", kind:"", scroll:"", suggestions:[]},
+      people:{eyebrow:"", title:"People", blurb:recSec.blurb, placeholder:"", kind:"", scroll:"", suggestions:[]},
+      suppliers:{eyebrow:"", title:"Suppliers", blurb:recSec.blurb, placeholder:"", kind:"", scroll:"", suggestions:[]}
     }[recSec.id];
+    const forjaRec = page === "Records" && FORJA_RECORD_TABS.indexOf(recSec.id) > -1;
 
     const recModel = {
       title: HERO.title, blurb: HERO.blurb,
       eyebrow: HERO.eyebrow, askPlaceholder: HERO.placeholder,
       searchKind: HERO.kind, scrollHint: HERO.scroll,
-      hasHero: page === "Records" && recSec.id !== "ontology",
+      hasHero: page === "Records" && recSec.id !== "ontology" && !forjaRec,
       isContacts: page === "Records" && recSec.id === "contacts",
       isFiles: page === "Records" && recSec.id === "files",
       isOntology: page === "Records" && recSec.id === "ontology",
@@ -1998,7 +2033,7 @@ export default class PulseLogic extends DCLogic {
     };
 
     const adminModel = {
-      company: "Kilbride Group",
+      company: "Forja Works",
       urgent: [
         ["3", "employees awaiting access", AMBER, "var(--warn-soft)", "people"],
         ["1", "integration disconnected", RED, "var(--bad-soft)", "integrations"],
@@ -2544,7 +2579,7 @@ export default class PulseLogic extends DCLogic {
 
     const APPROVALS = [
       {id:"a1", title:"Purchase order PO-4471 — €14,280", subject:"Munster Plumbing Supplies · raised by Aoife Nolan", age:"18m", status:"awaiting you",
-       steps:[{who:"Aoife Nolan",state:"raised 08:54",dot:GREEN},{who:"Martin Kilbride",state:"pending",dot:AMBER}],
+       steps:[{who:"Aoife Nolan",state:"raised 08:54",dot:GREEN},{who:"Caio Pazini",state:"pending",dot:AMBER}],
        work:{kind:"table", label:"PURCHASE ORDER", viewLabel:"View order",
          headline:"PO-4471 · Munster Plumbing Supplies", sub:"Delivery Thursday 18 Sep · terms 30 days",
          cols:["Line","Qty","Unit","Total"], align:["left","right","right","right"],
@@ -2560,7 +2595,7 @@ export default class PulseLogic extends DCLogic {
          tools:[["records.read","read"],["invoices.read","read"],["approvals.route","write"]],
          risk:"No alternative supplier quote on file. Last price change was 14 June."}},
       {id:"a2", title:"Credit limit increase — Casey Builders", subject:"€10,000 → €18,000 · raised by Niamh Cronin", age:"Yesterday", status:"awaiting you",
-       steps:[{who:"Niamh Cronin",state:"raised 16:02",dot:GREEN},{who:"Aoife Nolan",state:"approved 16:40",dot:GREEN},{who:"Martin Kilbride",state:"pending",dot:AMBER}],
+       steps:[{who:"Niamh Cronin",state:"raised 16:02",dot:GREEN},{who:"Aoife Nolan",state:"approved 16:40",dot:GREEN},{who:"Caio Pazini",state:"pending",dot:AMBER}],
        work:{kind:"diff", label:"RECORD CHANGE", viewLabel:"View change",
          headline:"Casey Builders Ltd · account CB-0142", sub:"Three fields change on approval, one unchanged",
          diff:[["Credit limit","€10,000","€18,000"],["Terms","30 days","45 days"],["Risk band","B","B"],["Reviewed","14 Mar 2026","Today"]],
@@ -2571,7 +2606,7 @@ export default class PulseLogic extends DCLogic {
          tools:[["records.read","read"],["invoices.read","read"],["records.update","write"]],
          risk:"One late payment in February, 19 days over. Cleared in full."}},
       {id:"a4", title:"Proposal — Ballincollig retrofit €62,400", subject:"Drafted by Helios · raised by Niamh Cronin", age:"3h", status:"awaiting you",
-       steps:[{who:"Niamh Cronin",state:"raised 06:10",dot:GREEN},{who:"Martin Kilbride",state:"pending",dot:AMBER}],
+       steps:[{who:"Niamh Cronin",state:"raised 06:10",dot:GREEN},{who:"Caio Pazini",state:"pending",dot:AMBER}],
        work:{kind:"doc", label:"PROPOSAL · 4 PAGES", viewLabel:"Read proposal",
          headline:"Heating retrofit — Ballincollig depot", sub:"Prepared for Casey Builders Ltd · valid 30 days",
          doc:[["Scope","Replace the depot's two oil boilers with a cascaded air-source system, re-balance the existing circuit and fit weather compensation controls. Work is phased over two weekends so the yard keeps running."],
@@ -2586,7 +2621,7 @@ export default class PulseLogic extends DCLogic {
          tools:[["records.read","read"],["files.read","read"],["email.send","external"]],
          risk:"No asbestos survey allowance. If the plant room needs one, add roughly €1,200."}},
       {id:"a5", title:"Payment run — 14 suppliers €48,920", subject:"Scheduled by Cash Watch · Friday 19 Sep", age:"1h", status:"awaiting you",
-       steps:[{who:"Cash Watch",state:"proposed 09:40",dot:GREEN},{who:"Martin Kilbride",state:"pending",dot:AMBER}],
+       steps:[{who:"Cash Watch",state:"proposed 09:40",dot:GREEN},{who:"Caio Pazini",state:"pending",dot:AMBER}],
        work:{kind:"table", label:"PAYMENT RUN", viewLabel:"View run",
          headline:"Run PR-0238 · 14 payments", sub:"Leaves the AIB current account on Friday 19 Sep",
          cols:["Supplier","Due","Invoices","Amount"], align:["left","left","right","right"],
@@ -2603,7 +2638,7 @@ export default class PulseLogic extends DCLogic {
          tools:[["invoices.read","read"],["payments.read","read"],["bank.payment.create","external"]],
          risk:"Two invoices held back total €2,410. They will age past 60 days if not paid next run."}},
       {id:"a3", title:"Write-off — INV-10233 €412", subject:"Glanmire Mechanical · raised by Aoife Nolan", age:"2 days", status:"approved",
-       steps:[{who:"Aoife Nolan",state:"raised",dot:GREEN},{who:"Martin Kilbride",state:"approved",dot:GREEN}],
+       steps:[{who:"Aoife Nolan",state:"raised",dot:GREEN},{who:"Caio Pazini",state:"approved",dot:GREEN}],
        work:{kind:"diff", label:"WRITE-OFF", viewLabel:"View write-off",
          headline:"INV-10233 · Glanmire Mechanical", sub:"Two fields change on approval",
          diff:[["Status","Past due 94 days","Written off"],["Balance","€412.00","€0.00"]],
@@ -2614,7 +2649,7 @@ export default class PulseLogic extends DCLogic {
          risk:"None. The counterparty no longer exists."}}
     ];
     const bucketOf = (a) => a.status === "approved" ? "Decided"
-      : a.steps.some(s => s.state === "pending" && s.who === "Martin Kilbride") ? "Awaiting you" : "Awaiting others";
+      : a.steps.some(s => s.state === "pending" && s.who === "Caio Pazini") ? "Awaiting you" : "Awaiting others";
     const APPROVAL_COUNTS = {"Awaiting you":0, "Awaiting others":0, "Decided":0};
     APPROVALS.filter(a => !st.approved[a.id]).forEach(a => { APPROVAL_COUNTS[bucketOf(a)] += 1; });
     const approvalView = st.workViews.approvals || "Awaiting you";
@@ -3089,7 +3124,12 @@ export default class PulseLogic extends DCLogic {
     const DIRS_ORDER = ["People","Organisations","Teams","Locations","Site visits"];
     const ADMIN_ORDER = ["Automations","System health","Installed modules"];
     let contextNav, contextHint, searchHint;
-    if (page === "Settings"){
+    if (F_TABS[page]){
+      const fcur = (F_TABS[page].find(t => t.id === st.ftab) || F_TABS[page][0]).id;
+      contextNav = F_TABS[page].map(t => seg(t.label, t.id === fcur, () => fNavigate({page, tab:t.id, job:st.fjob || undefined})));
+      contextHint = page.toUpperCase() + " · DEMO DATA";
+      searchHint = "Search " + page.toLowerCase();
+    } else if (page === "Settings"){
       contextNav = ADMIN_GROUPS.map(grp => seg(
         grp[0].charAt(0) + grp[0].slice(1).toLowerCase(),
         st.adminGroup === grp[0],
@@ -3104,7 +3144,7 @@ export default class PulseLogic extends DCLogic {
       searchHint = "Search the audit trail";
     } else if (page === "Records"){
       contextNav = REC_SECTIONS.map(s => seg(s.label, st.recSection === s.id,
-        () => this.setState({recSection:s.id})));
+        () => { this.setState({recSection:s.id}); fNavigate({page:"Records", tab:s.id}); }));
       contextHint = "RECORDS · " + recSec.label.toUpperCase();
       searchHint = recSec.id === "ontology" ? "Search the ontology" : "Search " + recSec.label.toLowerCase();
     } else if (page === "Work"){
@@ -3167,11 +3207,13 @@ export default class PulseLogic extends DCLogic {
     const roomy = st.w >= 1320, mid = st.w >= 1120;
     return {
       nav, contextNav, contextHint, searchHint, queueTasks,
-      isRecords: page === "Records",
-      isActivity: page === "Activity",
+      isRecords: page === "Records" && !forjaRec,
+      isForja: !!F_TABS[page] || forjaRec,
+      forjaPage: page, forjaTab: st.ftab || (forjaRec ? recSec.id : null), forjaJob: st.fjob,
+      isActivity: false,
       act: actModel,
       admin: adminModel,
-      showRecordsWash: page === "Records" && recSec.id !== "ontology",
+      showRecordsWash: page === "Records" && recSec.id !== "ontology" && !forjaRec,
       rec: recModel, tree: treeModel, onto: ontoModel, newRec: newRecModel, graph: graphModel,
 
       /* rail */
@@ -3195,7 +3237,7 @@ export default class PulseLogic extends DCLogic {
       settingsInlineStyle: inlineStyle(st.railHov === "settings", page === "Settings"),
 
       /* header zones */
-      isAgents: page === "Agents",
+      isAgents: false,
       showPillNav: page !== "Agents",
 
       /* home widgets */
@@ -3230,8 +3272,8 @@ export default class PulseLogic extends DCLogic {
       ],
 
       /* dashboard */
-      isDashboard: page === "Dashboard",
-      dashTitle: "Kilbride Group · " + areaLabel,
+      isDashboard: false,
+      dashTitle: "Forja Works · " + areaLabel,
       kpiEdit: st.kpiEdit,
       toggleKpiEdit: () => this.setState(prev => ({kpiEdit: !prev.kpiEdit})),
       kpiEditLabel: st.kpiEdit ? "Done" : "Edit KPIs",
@@ -4083,8 +4125,9 @@ export default class PulseLogic extends DCLogic {
         const live = st.agents.filter(a => a.state === "working" || a.state === "thinking").length;
         return (live ? live + " AGENTS RUNNING" : "NO AGENTS RUNNING") + " · SYNCED 2 MIN AGO";
       })(),
-      homeSubline: "Ask about any record, job or number you can see.",
-      approvalsPill: openKeys.length + " APPROVALS · €48,120 HELD",
+      homeSubline: "What can the workshop actually build today, and who can clear what's stuck?",
+      goApprovals: () => fNavigate({page:"Work", tab:"exceptions"}),
+      approvalsPill: forjaExc().length + " EXCEPTIONS · TUESDAY " + forjaTue(),
       showApprovalNote: openKeys.length > 0 && !st.approvalNoteHidden,
       dismissApprovalNote: () => this.setState({approvalNoteHidden:true}),
       /* Home canvas: a decorative layer the user can switch, scoped to the
@@ -4176,25 +4219,10 @@ export default class PulseLogic extends DCLogic {
           pick: () => this.setState({homeBg:o[0]})};
       }),
       greetingPrefix: (() => {
-        const h = new Date().getHours();
-        const pool = h < 5 ? ["Still up","Burning the midnight oil"]
-          : h < 12 ? ["Good morning","Rise and grind","Morning"]
-          : h < 17 ? ["Good afternoon","Afternoon"]
-          : h < 22 ? ["Good evening","Evening"]
-          : ["Still going","Night owl mode"];
-        // A goofy one about 1 in 5 times, otherwise the plain greeting — picked
-        // once per hour and cached, so it doesn't flip on every re-render.
-        const goofy = ["Top of the morning","Look who it is","Well if it isn't"];
-        const bucket = Math.floor(Date.now() / 3600000);
-        if (this._greetBucket !== bucket) {
-          this._greetBucket = bucket;
-          const useGoofy = bucket % 5 === 0;
-          const list = useGoofy ? pool.concat(goofy) : pool;
-          this._greetPick = list[Math.floor(Math.random() * list.length)];
-        }
-        return this._greetPick;
+        const h = dublinHour();
+        return h < 5 ? "Still up," : h < 12 ? "Good morning," : h < 18 ? "Good afternoon," : "Good evening,";
       })(),
-      greetingName: "Mac",
+      greetingName: "Caio",
       flipUnits: this.buildFlipUnits(BODY, INK, LIME),
       enterSettings: (e) => this.hover("__settings", "Settings", "", e),
       leaveSettings: () => this.unhover("__settings"),
@@ -4205,8 +4233,8 @@ export default class PulseLogic extends DCLogic {
         style: labelStyle(st.hovered !== null, st.hoverTop)
       },
       isChat: page === "Home",
-      isWork: page === "Work",
-      isSettings: page === "Settings",
+      isWork: false,
+      isSettings: false,
       admin: adminModel,
       inboxCount: String(openKeys.length),
       inboxEmpty: openKeys.length === 0,
@@ -4234,7 +4262,7 @@ export default class PulseLogic extends DCLogic {
           confirmSummary: m.confirmSummary || "",
           confirmHash: "sha256 a4f19c…",
           hasActions: done && m.confirm !== true && !!m.actions,
-          actions:(m.actions || []).map(a => ({label:a[0], bg:a[1] ? LIME : "none", color:a[1] ? "var(--on-accent)" : "var(--ink)", border:a[1] ? LIME : "var(--border)", run:() => this.ask(a[0])}))
+          actions:(m.actions || []).map(a => ({label:a[0], bg:a[1] ? LIME : "none", color:a[1] ? "var(--on-accent)" : "var(--ink)", border:a[1] ? LIME : "var(--border)", run:() => (a[2] ? fNavigate(a[2]) : this.ask(a[0]))}))
         };
       }),
       suggestions: [
@@ -4265,7 +4293,7 @@ export default class PulseLogic extends DCLogic {
       notifGroups: [["EARLIER TODAY", 0]],
       deployment: [
         {k:"Client", v:"kilbride", font:MONO},
-        {k:"App name", v:"Kilbride Group Operations", font:"inherit"},
+        {k:"App name", v:"Forja Works Operations", font:"inherit"},
         {k:"Accent", v:"oklch(0.86 0.19 118)", font:MONO},
         {k:"Terminology", v:"organisation → Merchant", font:"inherit"},
         {k:"Locale", v:"EUR · Europe/Dublin", font:"inherit"},
@@ -4341,9 +4369,9 @@ export default class PulseLogic extends DCLogic {
         + "max-width:" + (st.thread.length && !st.chatRailPinned ? "880px" : "760px") + ";"
         + "transition:max-width .38s var(--ease)",
       composerTools: [
-        {label:"Records", icon:ICONS.navRecords, go: () => this.setState({page:"Records"})},
-        {label:"Files", icon:ICONS.files, go: () => this.setState({page:"Records", recSection:"files"})},
-        {label:"Agents", icon:ICONS.navAgents, go: () => this.setState({page:"Agents"})}
+        {label:"Workshop today", icon:ICONS.modules, go: () => fNavigate({page:"Workshop", tab:"today"})},
+        {label:"Records", icon:ICONS.navRecords, go: () => this.go("Records")},
+        {label:"Agents", icon:ICONS.navAgents, go: () => this.go("Agents")}
       ],
       composerPrompts: [
         {label:"Chase the three invoices past 60 days", tag:"CASH", icon:ICONS.insights,
